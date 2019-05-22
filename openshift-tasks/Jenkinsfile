@@ -62,21 +62,31 @@ podTemplate(
       stage('Code Analysis') {
         echo "Running Code Analysis"
 
-        // TBD: Execute Sonarqube Tests
+        sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube-gpte-hw-cicd.apps.na311.openshift.opentlc.com -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
       }
 
       // Publish the built war file to Nexus
       stage('Publish to Nexus') {
         echo "Publish to Nexus"
 
-        // TBD: Publish to Nexus
+        sh "${mvnCmd} deploy -DskipTests=true -DaltDeploymentRepository=nexus::default::https://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000."
       }
 
       // Build the OpenShift Image in OpenShift and tag it.
       stage('Build and Tag OpenShift Image') {
         echo "Building OpenShift container image tasks:${devTag}"
 
-        // TBD: Build Image, tag Image
+            script {
+            openshift.withCluster() {
+            openshift.withProject("${devProject}") {
+                openshift.selector("bc", "tasks").startBuild("--from-file=./target/openshift-tasks.war", "--wait=true")
+                // OR use the file you just published into Nexus:
+                // "--from-file=http://nexus3.${prefix}-nexus.svc.cluster.local:8081/repository/releases/org/jboss/quickstarts/eap/tasks/${prodTag}/tasks-${prodTag}.war"
+                openshift.tag("tasks:latest", "tasks:${devTag}")
+            // TBD: Tag the image using the devTag.
+            }
+            }
+        }
       }
 
       // Deploy the built image to the Development Environment.
