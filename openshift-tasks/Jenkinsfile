@@ -42,7 +42,7 @@ podTemplate(
       stage('Build war') {
         echo "Building version ${devTag}"
 
-        // TBD: Execute Maven Build
+        sh "${mvnCmd} clean package -DskipTests=true"
       }
 
       // TBD: The next two stages should run in parallel
@@ -51,7 +51,11 @@ podTemplate(
       stage('Unit Tests') {
         echo "Running Unit Tests"
 
-        // TBD: Execute Unit Tests
+        echo "Running Unit Tests"
+        sh "${mvnCmd} test"
+        step(
+            [$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml']
+        )
       }
 
       // Using Maven to call SonarQube for Code Analysis
