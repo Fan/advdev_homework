@@ -63,7 +63,7 @@ podTemplate(
         echo "Running Code Analysis"
         //the sonarqube link is currently broken
         // sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube-gpte-hw-cicd.apps.na311.openshift.opentlc.com -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
-        //sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000"
+        sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000"
       }
 
       // Publish the built war file to Nexus
@@ -165,7 +165,7 @@ podTemplate(
 
               // Update the Image on the Production Deployment Config
               def dc = openshift.selector("dc/${destApp}").object()
-              dc.spec.template.spec.containers[0].image="nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/${GUID}-tasks-dev/tasks:${devTag}"
+              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
               openshift.apply(dc)
 
               // Update Config Map in change config files changed in the source
