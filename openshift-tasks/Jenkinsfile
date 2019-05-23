@@ -131,7 +131,7 @@ podTemplate(
 
           // Tag the built image with the production tag.
           openshift.withCluster() {
-              openshift.withProject("${prodProject}") {
+              openshift.withProject("${GUID}-tasks-prod") {
                 openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
               }
           }
@@ -150,7 +150,7 @@ podTemplate(
         //      Make sure the application is running and ready before proceeding
         script {
           openshift.withCluster() {
-            openshift.withProject("${prodProject}") {
+            openshift.withProject("${GUID}-tasks-prod") {
               activeApp = openshift.selector("route/tasks").object().spec.to.name
               echo "Active app before if:      " + activeApp
               if (activeApp == "tasks-green") {
