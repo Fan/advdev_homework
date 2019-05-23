@@ -97,7 +97,7 @@ podTemplate(
       // Update the Image on the Development Deployment Config
           openshift.withCluster() {
             openshift.withProject("${GUID}-tasks-dev") {
-              openshift.set("image", "dc/tasks", "tasks=https://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/${GUID}-tasks-dev/tasks:${devTag}")
+              openshift.set("image", "dc/tasks", "tasks=https://nexus-registry-gpte-hw-cicd.apps.na311.openshift.opentlc.com/${GUID}-tasks-dev/tasks:${devTag}")
 
               // Update the Config Map which contains the users for the Tasks application
               // (just in case the properties files changed in the latest commit)
