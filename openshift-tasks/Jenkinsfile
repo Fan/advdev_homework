@@ -125,18 +125,17 @@ podTemplate(
       stage('Copy Image to Nexus container registry') {
         echo "Copy image to Nexus container registry"
 
-        // TBD: Copy image to Nexus container registry
+        // Copy image to Nexus container registry
         script {
           sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
 
           // Tag the built image with the production tag.
           openshift.withCluster() {
               openshift.withProject("${prodProject}") {
-              openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
+                openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
               }
+          }
         }
-        }
-        // TBD: Tag the built image with the production tag.
       }
 
       // Blue/Green Deployment into Production
@@ -149,6 +148,52 @@ podTemplate(
         //      Set Image, Set VERSION
         //      Deploy into the other application
         //      Make sure the application is running and ready before proceeding
+        script {
+          openshift.withCluster() {
+            openshift.withProject("${prodProject}") {
+              activeApp = openshift.selector("route/tasks").object().spec.to.name
+              echo "Active app before if:      " + activeApp
+              if (activeApp == "tasks-green") {
+                destApp = "tasks-blue"
+              }
+              else {
+                  destApp = "tasks-green"
+              }
+              echo "Active Application:      " + activeApp
+              echo "Destination Application: " + destApp
+
+              // Update the Image on the Production Deployment Config
+              def dc = openshift.selector("dc/${destApp}").object()
+              dc.spec.template.spec.containers[0].image="docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
+              openshift.apply(dc)
+
+              // Update Config Map in change config files changed in the source
+              openshift.selector("configmap", "${destApp}-config").delete()
+              def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties", "--from-file=./configuration/application-roles.properties" )
+
+              // Deploy the inactive application. -- this is my ghetto way of doing it but it should probably be properly done in the step below
+              openshift.selector("dc", "${destApp}").rollout().latest();
+
+              //Update the spec.to.name of the file, so it will deploy as a new app
+              echo "Changing the name of the active app"
+
+              def route = openshift.selector("route/tasks").object()
+                  route.spec.to.name = "${destApp}"
+                  openshift.apply(route)
+              echo "New Active Application " + destApp
+
+              // Wait for application to be deployed
+              def dc_prod = openshift.selector("dc", "${destApp}").object()
+              def dc_version = dc_prod.status.latestVersion
+              def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+              echo "Waiting for ${destApp} to be ready"
+              while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
+                sleep 5
+                rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+              }
+            }
+          }
+        }
       }
 
       stage('Switch over to new Version') {
