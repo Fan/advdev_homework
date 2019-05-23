@@ -128,7 +128,8 @@ podTemplate(
         // Copy image to Nexus container registry
         script {
           sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
-
+          echo "dev tag:" + ${devTag}
+          echo "prod tag" + ${prodTag}
           // Tag the built image with the production tag.
           openshift.withCluster() {
               openshift.withProject("${GUID}-tasks-prod") {
