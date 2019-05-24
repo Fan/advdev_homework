@@ -114,21 +114,21 @@ podTemplate(
       }
 
       // Copy Image to Nexus container registry
-      stage('Copy Image to Nexus container registry') {
-        echo "Copy image to Nexus container registry"
+      // stage('Copy Image to Nexus container registry') {
+      //   echo "Copy image to Nexus container registry"
 
-        // Copy image to Nexus container registry
-        script {
-          sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
+      //   // Copy image to Nexus container registry
+      //   script {
+      //     sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
 
-          // Tag the built image with the production tag.
-          openshift.withCluster() {
-            openshift.withProject("${GUID}-tasks-prod") {
-              openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
-            }
-          }
-        }
-      }
+      //     // Tag the built image with the production tag.
+      //     openshift.withCluster() {
+      //       openshift.withProject("${GUID}-tasks-prod") {
+      //         openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
+      //       }
+      //     }
+      //   }
+      // }
 
       // Blue/Green Deployment into Production
       // -------------------------------------
@@ -151,9 +151,10 @@ podTemplate(
               echo "Destination Application: " + destApp
 
               // Update the Image on the Production Deployment Config
-              def dc = openshift.selector("dc/${destApp}").object()
-              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
-              openshift.apply(dc)
+              // def dc = openshift.selector("dc/${destApp}").object()
+              // dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
+              // openshift.apply(dc)
+              openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}")
 
               // Update Config Map in change config files changed in the source
               openshift.selector("configmap", "${destApp}-config").delete()
