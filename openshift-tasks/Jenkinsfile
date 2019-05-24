@@ -26,9 +26,6 @@ podTemplate(
 
     // Build the Tasks Service
     dir('openshift-tasks') {
-      // The following variables need to be defined at the top level
-      // and not inside the scope of a stage - otherwise they would not
-      // be accessible from other stages.
       // Extract version from the pom.xml
       def version = getVersionFromPom("pom.xml")
 
@@ -38,10 +35,8 @@ podTemplate(
       def prodTag = "${version}"
 
       // Using Maven build the war file
-      // Do not run tests in this step
       stage('Build war') {
         echo "Building version ${devTag}"
-
         sh "${mvnCmd} clean package -DskipTests=true"
       }
 
@@ -142,10 +137,6 @@ podTemplate(
       def activeApp = ""
 
       stage('Blue/Green Production Deployment') {
-        // TBD: Determine which application is active
-        //      Set Image, Set VERSION
-        //      Deploy into the other application
-        //      Make sure the application is running and ready before proceeding
         script {
           openshift.withCluster() {
             openshift.withProject("${GUID}-tasks-prod") {
@@ -162,7 +153,7 @@ podTemplate(
 
               // Update the Image on the Production Deployment Config
               def dc = openshift.selector("dc/${destApp}").object()
-              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
+              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${prodTag}"
               openshift.apply(dc)
 
               // Update Config Map in change config files changed in the source
