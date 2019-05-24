@@ -148,25 +148,28 @@ podTemplate(
       }
 
       stage('Switch over to new Version') {
-        echo "Switching Production application to ${destApp}."
-        openshift.selector("dc", "${destApp}").rollout().latest();
+        script{
 
-        //Update the spec.to.name of the file, so it will deploy as a new app
-        echo "Changing the name of the active app"
+          echo "Switching Production application to ${destApp}."
+          openshift.selector("dc", "${destApp}").rollout().latest();
 
-        def route = openshift.selector("route/tasks").object()
-            route.spec.to.name = "${destApp}"
-            openshift.apply(route)
-        echo "New Active Application " + destApp
+          //Update the spec.to.name of the file, so it will deploy as a new app
+          echo "Changing the name of the active app"
 
-        // Wait for application to be deployed
-        def dc_prod = openshift.selector("dc", "${destApp}").object()
-        def dc_version = dc_prod.status.latestVersion
-        def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-        echo "Waiting for ${destApp} to be ready"
-        while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
-          sleep 5
-          rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+          def route = openshift.selector("route/tasks").object()
+              route.spec.to.name = "${destApp}"
+              openshift.apply(route)
+          echo "New Active Application " + destApp
+
+          // Wait for application to be deployed
+          def dc_prod = openshift.selector("dc", "${destApp}").object()
+          def dc_version = dc_prod.status.latestVersion
+          def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+          echo "Waiting for ${destApp} to be ready"
+          while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
+            sleep 5
+            rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+          }
         }
       }
     }
