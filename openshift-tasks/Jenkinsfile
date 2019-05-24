@@ -48,23 +48,23 @@ podTemplate(
       // TBD: The next two stages should run in parallel
 
       // Using Maven run the unit tests
-      stage('Unit Tests') {
-        echo "Running Unit Tests"
+      // stage('Unit Tests') {
+      //   echo "Running Unit Tests"
 
-        echo "Running Unit Tests"
-        sh "${mvnCmd} test"
-        step(
-            [$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml']
-        )
-      }
+      //   echo "Running Unit Tests"
+      //   sh "${mvnCmd} test"
+      //   step(
+      //       [$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml']
+      //   )
+      // }
 
-      // Using Maven to call SonarQube for Code Analysis
-      stage('Code Analysis') {
-        echo "Running Code Analysis"
-        //the sonarqube link is currently broken
-        // sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube-gpte-hw-cicd.apps.na311.openshift.opentlc.com -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
-        sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000"
-      }
+      // // Using Maven to call SonarQube for Code Analysis
+      // stage('Code Analysis') {
+      //   echo "Running Code Analysis"
+      //   //the sonarqube link is currently broken
+      //   // sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube-gpte-hw-cicd.apps.na311.openshift.opentlc.com -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
+      //   sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000"
+      // }
 
       // Publish the built war file to Nexus
       stage('Publish to Nexus') {
@@ -129,8 +129,8 @@ podTemplate(
           echo "prod tag: " + prodTag
           // Tag the built image with the production tag.
           openshift.withCluster() {
-              openshift.withProject("${GUID}-tasks-prod") {
-                openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
+              openshift.withProject("${GUID}-tasks-dev") {
+                openshift.tag("tasks:${devTag}", "tasks:${prodTag}")
               }
           }
         }
@@ -162,7 +162,7 @@ podTemplate(
 
               // Update the Image on the Production Deployment Config
               def dc = openshift.selector("dc/${destApp}").object()
-              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
+              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${prodTag}"
               openshift.apply(dc)
 
               // Update Config Map in change config files changed in the source
