@@ -151,10 +151,10 @@ podTemplate(
               echo "Destination Application: " + destApp
 
               // Update the Image on the Production Deployment Config
-              // def dc = openshift.selector("dc/${destApp}").object()
-              // dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
-              // openshift.apply(dc)
-              openshift.set("image", "dc/${destApp}", "${destApp}=docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}")
+              def dc = openshift.selector("dc/${destApp}").object()
+              dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}"
+              openshift.apply(dc)
+              // openshift.set("image", "dc/${destApp}", "${destApp}=docker-registry.default.svc:5000/${GUID}-tasks-dev/tasks:${devTag}")
 
               // Update Config Map in change config files changed in the source
               openshift.selector("configmap", "${destApp}-config").delete()
