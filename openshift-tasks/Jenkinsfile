@@ -117,7 +117,7 @@ podTemplate(
                   echo "*** tasks-dev returned unexpected name."
                   sleep 5
                 }
-
+              }
               // echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
               // while (rc.spec.replicas != rc.status.readyReplicas) {
               //   sleep 5
