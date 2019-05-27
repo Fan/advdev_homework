@@ -106,7 +106,7 @@ podTemplate(
               def tryAgain = true
               def tasksRoute = ""
               while (tryAgain) {
-                tasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
+                tasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
                 if (tasksRoute.contains("tasks-dev")) {
                   echo "*** tasks-dev validated successfully."
                   tryAgain = false
