@@ -97,17 +97,19 @@ podTemplate(
 
               // Deploy the development application.
               openshift.selector("dc", "tasks").rollout().latest();
+              openshift.set("env", "dc/tasks", "VERSION='${devTag} (tasks-dev)'", "--overwrite")
 
               // Wait for application to be deployed
               def dc = openshift.selector("dc", "tasks").object()
               def dc_version = dc.status.latestVersion
               def rc = openshift.selector("rc", "tasks-${dc_version}").object()
 
+              echo "Waiting for 'tasks-dev' to appear in the curl response"
               def tryAgain = true
-              def tasksRoute = ""
+              def devTasksRoute = ""
               while (tryAgain) {
-                tasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
-                if (tasksRoute.contains("tasks")) {
+                devTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
+                if (devTasksRoute.contains("tasks-dev")) {
                   echo "*** tasks-dev validated successfully."
                   tryAgain = false
                 }
@@ -115,7 +117,6 @@ podTemplate(
                   echo "*** tasks-dev returned unexpected name."
                   sleep 5
                 }
-              }
 
               // echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
               // while (rc.spec.replicas != rc.status.readyReplicas) {
