@@ -129,17 +129,16 @@ podTemplate(
       stage('Copy Image to Nexus container registry') {
         echo "Copy image to Nexus container registry"
         script {
+          // Copy image to Nexus container registry
+          sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc.cluster.local:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
 
-            // Copy image to Nexus container registry
-            sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc.cluster.local:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
-
-            // Tag the built image with the production tag.
-            openshift.withCluster() {
-                openshift.withProject("${GUID}-tasks-prod") {
-                openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
-                }
+          // Tag the built image with the production tag.
+          openshift.withCluster() {
+            openshift.withProject("${GUID}-tasks-prod") {
+              openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
             }
           }
+        }
       }
 
       // Blue/Green Deployment into Production
@@ -195,10 +194,11 @@ podTemplate(
                 def dc_version = dc_prod.status.latestVersion
                 def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
                 echo "Waiting for ${destApp} to be ready"
-                while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
-                  sleep 5
-                  rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-                }
+                // while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
+                //   sleep 5
+                //   rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+                // }
+
                 echo "Waiting for '${destApp}' to appear in the curl response"
                 def tryAgain = true
                 def tasksRoute = ""
