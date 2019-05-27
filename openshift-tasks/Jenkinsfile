@@ -193,7 +193,7 @@ podTemplate(
                 def dc_prod = openshift.selector("dc", "${destApp}").object()
                 def dc_version = dc_prod.status.latestVersion
                 def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-                echo "Waiting for ${destApp} to be ready"
+                // echo "Waiting for ${destApp} to be ready"
                 // while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
                 //   sleep 5
                 //   rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
@@ -213,6 +213,7 @@ podTemplate(
                     sleep 5
                   }
                 }
+              }
             }
         }
       }
