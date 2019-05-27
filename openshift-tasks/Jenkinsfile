@@ -107,12 +107,12 @@ podTemplate(
               def tasksRoute = ""
               while (tryAgain) {
                 tasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
-                if (tasksRoute.contains("${destApp}")) {
-                  echo "*** ${destApp} validated successfully."
+                if (tasksRoute.contains("tasks-dev")) {
+                  echo "*** tasks-dev validated successfully."
                   tryAgain = false
                 }
                 else {
-                  echo "*** ${destApp} returned unexpected name."
+                  echo "*** tasks-dev returned unexpected name."
                   sleep 5
                 }
               }
