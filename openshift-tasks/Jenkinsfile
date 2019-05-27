@@ -172,6 +172,7 @@ podTemplate(
               // Update Config Map in change config files changed in the source
               openshift.selector("configmap", "${destApp}-config").delete()
               def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties", "--from-file=./configuration/application-roles.properties" )
+              openshift.selector("dc", "${destApp}").rollout().latest();
             }
           }
         }
@@ -182,7 +183,6 @@ podTemplate(
             openshift.withCluster() {
               openshift.withProject("${GUID}-tasks-prod") {
                 echo "Switching Production application to ${destApp}."
-                openshift.selector("dc", "${destApp}").rollout().latest();
 
                 //Update the spec.to.name of the file, so it will deploy as a new app
                 echo "Changing the name of the active app"
