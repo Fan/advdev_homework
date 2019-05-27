@@ -103,11 +103,27 @@ podTemplate(
               def dc_version = dc.status.latestVersion
               def rc = openshift.selector("rc", "tasks-${dc_version}").object()
 
-              echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
-              while (rc.spec.replicas != rc.status.readyReplicas) {
-                sleep 5
-                rc = openshift.selector("rc", "tasks-${dc_version}").object()
-              }
+               echo "Waiting for 'tasks-dev' to appear in the curl response"
+              def tryAgain = true
+              def devTasksRoute = ""
+
+
+              while (tryAgain) {
+                devTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
+                if (devTasksRoute.contains("tasks-dev")) {
+                  echo "*** tasks-dev validated successfully."
+                  tryAgain = false
+                }
+                else {
+                  echo "*** tasks-dev returned unexpected name."
+                  sleep 5
+                }
+
+              // echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
+              // while (rc.spec.replicas != rc.status.readyReplicas) {
+              //   sleep 5
+              //   rc = openshift.selector("rc", "tasks-${dc_version}").object()
+              // }
             }
           }
         }
@@ -182,11 +198,13 @@ podTemplate(
                 def dc_prod = openshift.selector("dc", "${destApp}").object()
                 def dc_version = dc_prod.status.latestVersion
                 def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-                echo "Waiting for ${destApp} to be ready"
-                while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
-                  sleep 5
-                  rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-                }
+
+                // echo "Waiting for ${destApp} to be ready"
+                // while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
+                //   sleep 5
+                //   rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
+                // }
+
                 echo "Waiting for '${destApp}' to appear in the curl response"
                 def tryAgain = true
                 def tasksRoute = ""
