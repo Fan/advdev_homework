@@ -202,6 +202,10 @@ podTemplate(
                 //   rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
                 // }
 
+                def routeObj = openshift.selector("route", "tasks").object()
+                routeObj.spec.to.name = destApp
+                openshift.apply(routeObj)
+
                 echo "Waiting for '${destApp}' to appear in the curl response"
                 def tryAgain = true
                 def tasksRoute = ""
