@@ -103,6 +103,8 @@ podTemplate(
               def dc_version = dc.status.latestVersion
               def rc = openshift.selector("rc", "tasks-${dc_version}").object()
 
+              def tryAgain = true
+              def tasksRoute = ""
               while (tryAgain) {
                 tasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
                 if (tasksRoute.contains("${destApp}")) {
