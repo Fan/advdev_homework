@@ -114,6 +114,22 @@ podTemplate(
       }
 
       // Copy Image to Nexus container registry
+      stage('Copy Image to Nexus container registry') {
+        echo "Copy image to Nexus container registry"
+        script {
+
+            // Copy image to Nexus container registry
+            sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc.cluster.local:5000/${GUID}-tasks-dev/tasks:${devTag} docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
+
+            // Tag the built image with the production tag.
+            openshift.withCluster() {
+                openshift.withProject("${GUID}-tasks-prod") {
+                openshift.tag("${GUID}-tasks-dev/tasks:${devTag}", "${GUID}-tasks-dev/tasks:${prodTag}")
+                }
+            }
+          }
+      }
+
       // Blue/Green Deployment into Production
       // -------------------------------------
       def destApp   = "tasks-green"
@@ -142,7 +158,6 @@ podTemplate(
               // Update Config Map in change config files changed in the source
               openshift.selector("configmap", "${destApp}-config").delete()
               def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties", "--from-file=./configuration/application-roles.properties" )
-              openshift.apply(configmap)
             }
           }
         }
