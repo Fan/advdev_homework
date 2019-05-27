@@ -104,7 +104,7 @@ podTemplate(
               def dc_version = dc.status.latestVersion
               def rc = openshift.selector("rc", "tasks-${dc_version}").object()
 
-              echo "Waiting for 'tasks-dev' to appear in the curl response"
+              echo "Waiting for 'tasks' to appear in the curl response"
               def tryAgain = true
               def devTasksRoute = ""
               while (tryAgain) {
@@ -118,11 +118,6 @@ podTemplate(
                   sleep 5
                 }
               }
-              // echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
-              // while (rc.spec.replicas != rc.status.readyReplicas) {
-              //   sleep 5
-              //   rc = openshift.selector("rc", "tasks-${dc_version}").object()
-              // }
             }
           }
         }
@@ -171,16 +166,11 @@ podTemplate(
 
               openshift.set("env", "dc/${destApp}", "VERSION='${prodTag} (${destApp})'", "--overwrite")
 
-
               // Update Config Map in change config files changed in the source
               openshift.selector("configmap", "${destApp}-config").delete()
               def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties", "--from-file=./configuration/application-roles.properties" )
               openshift.selector("dc", "${destApp}").rollout().latest();
 
-              // Wait for application to be deployed
-              // def dc_prod = openshift.selector("dc", "${destApp}").object()
-              // def dc_version = dc_prod.status.latestVersion
-              // def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
             }
           }
         }
@@ -191,15 +181,6 @@ podTemplate(
             openshift.withCluster() {
               openshift.withProject("${GUID}-tasks-prod") {
                 echo "Switching Production application to ${destApp}."
-
-                //Update the spec.to.name of the file, so it will deploy as a new app
-                // echo "Changing the name of the active app"
-
-                // def route = openshift.selector("route/tasks").object()
-                //     route.spec.to.name = "${destApp}"
-                //     openshift.apply(route)
-                // echo "New Active Application " + destApp
-
 
                 def routeObj = openshift.selector("route", "tasks").object()
                 routeObj.spec.to.name = destApp
